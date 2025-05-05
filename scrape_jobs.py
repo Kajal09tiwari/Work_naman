@@ -286,17 +286,16 @@ from selenium.common.exceptions import NoSuchElementException
 from pymongo import MongoClient
 import time
 
-# MongoDB connection
 client = MongoClient("mongodb+srv://kt3082006:kajal@webscrape.nzhi7b1.mongodb.net/?retryWrites=true&w=majority")
-db = client["job_scraper_db"]            # Database name
-collection = db["naukri_jobs"]           # Collection name
+db = client["job_scraper_db"]            
+collection = db["naukri_jobs"]           
 
-# Selenium WebDriver Setup
+
 chrome_options = Options()
 chrome_options.add_argument("--start-maximized")
 driver = webdriver.Chrome(options=chrome_options)
 
-# Open the job listing page
+
 driver.get("https://www.naukri.com/python-developer-jobs")
 time.sleep(5)  
 
@@ -336,63 +335,63 @@ for index, job in enumerate(job_cards, start=1):
     except NoSuchElementException:
         posted_date = "N/A"
 
-    # Add more fields to match the job schema
+   
     try:
-        jd_url = job.find_element(By.CLASS_NAME, "jd-url").get_attribute("href")  # Assuming job description URL
+        jd_url = job.find_element(By.CLASS_NAME, "jd-url").get_attribute("href")  
     except NoSuchElementException:
         jd_url = "N/A"
 
     try:
-        email = job.find_element(By.CLASS_NAME, "email").text  # If available, extract email
+        email = job.find_element(By.CLASS_NAME, "email").text  
     except NoSuchElementException:
         email = "N/A"
 
-    # Map scraped data to the schema
+   
     job_data = {
-        "id": index,  # Unique id for the job
-        "designation": title,  # Designation or job title
+        "id": index,  
+        "designation": title, 
         "location": location,
-        "jobinfo": "N/A",  # You can add more details from the job description if needed
-        "description": "N/A",  # Job description if it's available
-        "min_experience": experience.split("-")[0].strip() if experience != "N/A" else "N/A",  # Example: "2-5 years"
+        "jobinfo": "N/A",  
+        "description": "N/A",  
+        "min_experience": experience.split("-")[0].strip() if experience != "N/A" else "N/A",  
         "max_experience": experience.split("-")[1].strip() if experience != "N/A" else "N/A",
         "company": company,
         "jd_url": jd_url,
-        "vacancies": "N/A",  # If available, you can scrape number of vacancies
-        "logo_url": "N/A",  # If available, you can scrape company logo
-        "te_logo_url": "N/A",  # If available, scrape tech logo URL
-        "white_listed_keywords": "N/A",  # If any
-        "keywords": "N/A",  # Add keywords here if available
-        "keywords_ar": "N/A",  # Arabic keywords if available
+        "vacancies": "N/A",  
+        "logo_url": "N/A",  
+        "te_logo_url": "N/A", 
+        "white_listed_keywords": "N/A",  
+        "keywords": "N/A",  
+        "keywords_ar": "N/A",  
         "email": email,
-        "is_easy_apply": "N/A",  # If it's easy apply
-        "job_id": str(index),  # Job id
+        "is_easy_apply": "N/A",  
+        "job_id": str(index),  
         "job_posted_date_time": posted_date,
-        "min_Salary": salary,  # Salary range if available
-        "max_Salary": salary,  # If salary is given as a range, you can split it
-        "Country": "India",  # You can derive from location
-        "State": "N/A",  # Derive from location if possible
+        "min_Salary": salary,  
+        "max_Salary": salary,  
+        "Country": "India",  
+        "State": "N/A",  
         "City": location,
-        "functional_Domain": "N/A",  # If available
-        "sector_industry_Domain": "N/A",  # If available
-        "icon": "N/A",  # If available
-        "skills": "N/A",  # If skills are listed
-        "program_ids": "N/A",  # If available
-        "gulf_id": "N/A",  # If available
-        "education": "N/A",  # If available
-        "nationality": "N/A",  # If nationality is mentioned
-        "gender": "N/A",  # Gender preference
-        "chart_key": "N/A",  # If available
-        "job_role": title,  # Job role
-        "job_designation": title,  # Job designation
-        "status": "Active",  # Default status
-        "created_at": time.strftime("%Y-%m-%d %H:%M:%S"),  # Date of scraping
+        "functional_Domain": "N/A",  
+        "sector_industry_Domain": "N/A",  
+        "icon": "N/A",  
+        "skills": "N/A",  
+        "program_ids": "N/A",  
+        "gulf_id": "N/A",  
+        "education": "N/A",  
+        "nationality": "N/A", 
+        "gender": "N/A",  
+        "chart_key": "N/A",  
+        "job_role": title,  
+        "job_designation": title,  
+        "status": "Active",  
+        "created_at": time.strftime("%Y-%m-%d %H:%M:%S"),  
         "updated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
         "source": "Naukri",
-        "organization_id": index  # Unique ID for each job
+        "organization_id": index  
     }
 
-    # Insert data into MongoDB
+   
     try:
         collection.insert_one(job_data)
         print(f"✅ Inserted Job {index}: {title}")
