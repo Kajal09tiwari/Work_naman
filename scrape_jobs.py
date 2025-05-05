@@ -279,7 +279,6 @@
 # print("\n🎉 All jobs inserted into MongoDB successfully.")
 ##################################################################################################
 
-
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -287,16 +286,17 @@ from selenium.common.exceptions import NoSuchElementException
 from pymongo import MongoClient
 import time
 
-
+# MongoDB connection
 client = MongoClient("mongodb+srv://kt3082006:kajal@webscrape.nzhi7b1.mongodb.net/?retryWrites=true&w=majority")
 db = client["job_scraper_db"]            # Database name
 collection = db["naukri_jobs"]           # Collection name
 
-
+# Selenium WebDriver Setup
 chrome_options = Options()
 chrome_options.add_argument("--start-maximized")
 driver = webdriver.Chrome(options=chrome_options)
 
+# Open the job listing page
 driver.get("https://www.naukri.com/python-developer-jobs")
 time.sleep(5)  
 
@@ -336,17 +336,63 @@ for index, job in enumerate(job_cards, start=1):
     except NoSuchElementException:
         posted_date = "N/A"
 
-    # 5. ✅ Create dictionary for MongoDB
+    # Add more fields to match the job schema
+    try:
+        jd_url = job.find_element(By.CLASS_NAME, "jd-url").get_attribute("href")  # Assuming job description URL
+    except NoSuchElementException:
+        jd_url = "N/A"
+
+    try:
+        email = job.find_element(By.CLASS_NAME, "email").text  # If available, extract email
+    except NoSuchElementException:
+        email = "N/A"
+
+    # Map scraped data to the schema
     job_data = {
-        "title": title,
-        "company": company,
+        "id": index,  # Unique id for the job
+        "designation": title,  # Designation or job title
         "location": location,
-        "experience": experience,
-        "salary": salary,
-        "posted_date": posted_date
+        "jobinfo": "N/A",  # You can add more details from the job description if needed
+        "description": "N/A",  # Job description if it's available
+        "min_experience": experience.split("-")[0].strip() if experience != "N/A" else "N/A",  # Example: "2-5 years"
+        "max_experience": experience.split("-")[1].strip() if experience != "N/A" else "N/A",
+        "company": company,
+        "jd_url": jd_url,
+        "vacancies": "N/A",  # If available, you can scrape number of vacancies
+        "logo_url": "N/A",  # If available, you can scrape company logo
+        "te_logo_url": "N/A",  # If available, scrape tech logo URL
+        "white_listed_keywords": "N/A",  # If any
+        "keywords": "N/A",  # Add keywords here if available
+        "keywords_ar": "N/A",  # Arabic keywords if available
+        "email": email,
+        "is_easy_apply": "N/A",  # If it's easy apply
+        "job_id": str(index),  # Job id
+        "job_posted_date_time": posted_date,
+        "min_Salary": salary,  # Salary range if available
+        "max_Salary": salary,  # If salary is given as a range, you can split it
+        "Country": "India",  # You can derive from location
+        "State": "N/A",  # Derive from location if possible
+        "City": location,
+        "functional_Domain": "N/A",  # If available
+        "sector_industry_Domain": "N/A",  # If available
+        "icon": "N/A",  # If available
+        "skills": "N/A",  # If skills are listed
+        "program_ids": "N/A",  # If available
+        "gulf_id": "N/A",  # If available
+        "education": "N/A",  # If available
+        "nationality": "N/A",  # If nationality is mentioned
+        "gender": "N/A",  # Gender preference
+        "chart_key": "N/A",  # If available
+        "job_role": title,  # Job role
+        "job_designation": title,  # Job designation
+        "status": "Active",  # Default status
+        "created_at": time.strftime("%Y-%m-%d %H:%M:%S"),  # Date of scraping
+        "updated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "source": "Naukri",
+        "organization_id": index  # Unique ID for each job
     }
 
-  
+    # Insert data into MongoDB
     try:
         collection.insert_one(job_data)
         print(f"✅ Inserted Job {index}: {title}")
